@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetMind — AI Meeting Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0f0f0e;
+  --bg2:#161614;
+  --bg3:#1e1e1b;
+  --border:#2a2a27;
+  --text:#f0ede8;
+  --text2:#8a8780;
+  --text3:#5a5855;
+  --green:#2dba7e;
+  --green-dim:#1a3d2e;
+  --red:#e05a4a;
+  --yellow:#d4a843;
+  --font:'DM Sans',sans-serif;
+  --mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+/* AUTH PAGE */
+.auth-page{display:flex;min-height:100vh}
+.auth-left{width:44%;background:var(--bg2);border-right:1px solid var(--border);padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.auth-logo{display:flex;align-items:center;gap:10px}
+.auth-logo-mark{width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.auth-logo-mark i{color:#000;font-size:16px}
+.auth-logo-name{font-size:15px;font-weight:600;color:var(--text)}
+.auth-left-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+.auth-left-title{font-size:28px;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:12px;letter-spacing:-0.02em}
+.auth-left-title span{color:var(--green)}
+.auth-left-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:36px}
+.auth-feat{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+.auth-feat-dot{width:6px;height:6px;background:var(--green);border-radius:50%;margin-top:6px;flex-shrink:0}
+.auth-feat-text{font-size:13px;color:var(--text2);line-height:1.5}
+.auth-feat-text strong{color:var(--text);font-weight:500;display:block}
+.auth-left-footer{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+.auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--bg)}
+.auth-box{width:100%;max-width:380px}
+.auth-tabs{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:32px}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:13px;color:var(--text2);cursor:pointer;border-radius:7px;transition:all 0.15s;font-family:var(--font)}
+.auth-tab.active{background:var(--bg3);color:var(--text);font-weight:500;border:1px solid var(--border)}
+.auth-title{font-size:20px;font-weight:500;color:var(--text);margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block;font-family:var(--mono)}
+.form-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:var(--bg2);font-family:var(--font);outline:none;transition:border-color 0.15s;margin-bottom:14px}
+.form-input:focus{border-color:var(--green)}
+.form-input::placeholder{color:var(--text3)}
+.btn-submit{width:100%;padding:12px;border:none;border-radius:8px;background:var(--green);color:#000;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s;margin-top:4px}
+.btn-submit:hover{opacity:0.85}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.auth-switch{font-size:12px;color:var(--text2);text-align:center;margin-top:16px}
+.auth-switch a{color:var(--green);cursor:pointer}
+.auth-error{background:#2d1a18;border:1px solid #5a2e28;border-radius:8px;padding:10px 14px;font-size:12px;color:#e08070;margin-bottom:14px;display:none}
+.auth-success{background:#1a2d22;border:1px solid #2a5a3a;border-radius:8px;padding:10px 14px;font-size:12px;color:#70e0a0;margin-bottom:14px;display:none}
+.btn-google{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:13px;color:var(--text);cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;transition:background 0.15s;font-weight:500}
+.btn-google:hover{background:var(--bg3)}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-text{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* DASHBOARD */
+.dashboard{display:flex;height:100vh;display:none}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-logo-mark{width:28px;height:28px;background:var(--green);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.sidebar-logo-mark i{color:#000;font-size:14px}
+.sidebar-logo-name{font-size:14px;font-weight:600;color:var(--text)}
+.nav-section{font-size:10px;color:var(--text3);letter-spacing:0.08em;padding:16px 18px 6px;text-transform:uppercase;font-family:var(--mono)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:13px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all 0.1s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{color:var(--green);background:#1a2d22;border-left-color:var(--green);font-weight:500}
+.nav-item i{font-size:16px}
+.nav-bottom{margin-top:auto;border-top:1px solid var(--border);padding:8px 0}
+.user-info{padding:14px 18px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.user-info:hover{background:var(--bg3)}
+.user-avatar{width:28px;height:28px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--green);flex-shrink:0}
+.user-name{font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-email{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:16px 24px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:15px;font-weight:500;color:var(--text)}
+.page-sub{font-size:12px;color:var(--text2);margin-top:2px;font-family:var(--mono)}
+.btn-new{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--green);border:none;border-radius:8px;font-size:12px;color:#000;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s}
+.btn-new:hover{opacity:0.85}
+
+.content{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stat-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-family:var(--mono)}
+.stat-val{font-size:24px;font-weight:500;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--green);margin-top:4px}
+
+.section-hd{display:flex;align-items:center;justify-content:space-between}
+.section-hd span{font-size:13px;font-weight:500;color:var(--text)}
+.meetings-list{display:flex;flex-direction:column;gap:8px}
+.meeting-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:border-color 0.15s;display:flex;align-items:center;gap:16px}
+.meeting-row:hover{border-color:var(--text3)}
+.meeting-row.sel{border-color:var(--green)}
+.meeting-icon{width:36px;height:36px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.meeting-icon i{font-size:18px;color:var(--text2)}
+.meeting-body{flex:1;min-width:0}
+.meeting-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.meeting-meta{font-size:11px;color:var(--text2);font-family:var(--mono);display:flex;gap:12px}
+.meeting-tags{display:flex;gap:6px;margin-top:6px}
+.mtag{font-size:10px;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.pill{font-size:10px;padding:3px 10px;border-radius:99px;font-weight:500;white-space:nowrap;font-family:var(--mono)}
+.pill-done{background:var(--green-dim);color:var(--green)}
+.pill-proc{background:#2d2518;color:var(--yellow)}
+
+.empty-state{text-align:center;padding:48px 24px;color:var(--text2)}
+.empty-state i{font-size:40px;color:var(--text3);margin-bottom:12px}
+.empty-state p{font-size:14px;margin-bottom:6px;color:var(--text)}
+.empty-state span{font-size:12px}
+
+/* UPLOAD MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:480px}
+.modal-title{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.upload-zone{border:1.5px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.15s;margin-bottom:16px}
+.upload-zone:hover{border-color:var(--green)}
+.upload-zone i{font-size:32px;color:var(--text3);margin-bottom:10px}
+.upload-zone p{font-size:13px;color:var(--text2);margin-bottom:4px}
+.upload-zone span{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:transparent;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font)}
+.btn-cancel:hover{background:var(--bg3)}
+.btn-upload{flex:2;padding:10px;border:none;border-radius:8px;background:var(--green);font-size:13px;color:#000;font-weight:600;cursor:pointer;font-family:var(--font)}
+.btn-upload:hover{opacity:0.85}
+.btn-upload:disabled{opacity:0.4;cursor:not-allowed}
+
+.progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+.progress-fill{height:4px;background:var(--green);border-radius:2px;width:0%;transition:width 0.3s}
+
+/* DETAIL PANEL */
+.detail-panel{width:300px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;display:none}
+.detail-hd{padding:18px;border-bottom:1px solid var(--border)}
+.detail-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+.detail-meta{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.detail-body{padding:16px;display:flex;flex-direction:column;gap:18px;flex:1}
+.det-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;font-family:var(--mono)}
+.summary-box{background:var(--bg3);border-radius:8px;padding:12px;font-size:12px;color:var(--text);line-height:1.7}
+.action-item{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.action-item:last-child{border:none}
+.adot{width:5px;height:5px;background:var(--green);border-radius:50%;margin-top:5px;flex-shrink:0}
+.action-text{font-size:12px;color:var(--text);line-height:1.4}
+.action-who{font-size:11px;color:var(--text2);margin-top:2px;font-family:var(--mono)}
+.detail-footer{padding:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.foot-btn{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font);width:100%;transition:all 0.15s}
+.foot-btn:hover{background:var(--bg3);color:var(--text)}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text2);font-size:13px;gap:10px}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH PAGE -->
+<div class="auth-page" id="authPage">
+  <div class="auth-left">
+    <div class="auth-logo">
+      <div class="auth-logo-mark"><i class="ti ti-wave-sine"></i></div>
+      <span class="auth-logo-name">MeetMind</span>
+    </div>
+    <div class="auth-left-body">
+      <div class="auth-left-title">Your meetings,<br><span>understood by AI.</span></div>
+      <div class="auth-left-sub">Upload any recording. Get instant summary, action items, and transcript — in Hindi or English.</div>
+      <div class="auth-feat"><div class="auth-feat-dot"></div><div class="auth-feat-text"><strong>Instant AI summaries</strong>1-hour meeting condensed to key points in seconds.</div></div>
+      <div class="auth-feat"><div class="auth-feat-dot"></div><div class="auth-feat-text"><strong>Auto action items</strong>AI detects who said what and assigns tasks.</div></div>
+      <div class="auth-feat"><div class="auth-feat-dot"></div><div class="auth-feat-text"><strong>Hindi & Hinglish support</strong>Built for Indian teams.</div></div>
+    </div>
+    <div class="auth-left-footer">© 2026 MeetMind · Made in India</div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign in</div>
+        <div class="auth-tab" id="tabSignup" onclick="switchTab('signup')">Create account</div>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginForm">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Sign in to your MeetMind account.</div>
+        <div class="auth-error" id="loginError"></div>
+        <div class="auth-success" id="loginSuccess"></div>
+        <button class="btn-google" onclick="doGoogleLogin()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="you@company.com">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="btn-submit" id="loginBtn" onclick="doLogin()">Sign in</button>
+        <div class="auth-switch">Don't have an account? <a onclick="switchTab('signup')">Create one free</a></div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="signupForm" style="display:none">
+        <div class="auth-title">Create your account</div>
+        <div class="auth-sub">Free forever. No credit card needed.</div>
+        <div class="auth-error" id="signupError"></div>
+        <div class="auth-success" id="signupSuccess"></div>
+        <button class="btn-google" onclick="doGoogleLogin()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign up with Google
+        </button>
+        <div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>
+        <label class="form-label">Full name</label>
+        <input class="form-input" type="text" id="signupName" placeholder="Rahul Sharma">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" id="signupEmail" placeholder="you@company.com">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="signupPass" placeholder="Min. 8 characters" onkeydown="if(event.key==='Enter')doSignup()">
+        <button class="btn-submit" id="signupBtn" onclick="doSignup()">Create free account</button>
+        <div class="auth-switch">Already have an account? <a onclick="switchTab('login')">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark"><i class="ti ti-wave-sine"></i></div>
+      <span class="sidebar-logo-name">MeetMind</span>
+    </div>
+    <div class="nav-section">Workspace</div>
+    <div class="nav-item active"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="nav-item"><i class="ti ti-microphone"></i> Meetings</div>
+    <div class="nav-item"><i class="ti ti-file-description"></i> Transcripts</div>
+    <div class="nav-item"><i class="ti ti-checklist"></i> Action items</div>
+    <div class="nav-section">Insights</div>
+    <div class="nav-item"><i class="ti ti-chart-bar"></i> Analytics</div>
+    <div class="nav-item"><i class="ti ti-users"></i> Team</div>
+    <div class="nav-bottom">
+      <div class="user-info" onclick="doLogout()">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div>
+          <div class="user-name" id="userName">Loading...</div>
+          <div class="user-email" id="userEmail"></div>
+        </div>
+        <i class="ti ti-logout" style="font-size:14px;color:var(--text3)"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dashDate">Loading...</div>
+      </div>
+      <button class="btn-new" onclick="openModal()"><i class="ti ti-plus" style="font-size:14px"></i> New meeting</button>
+    </div>
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total meetings</div><div class="stat-val" id="statTotal">0</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card"><div class="stat-label">This month</div><div class="stat-val" id="statMonth">0</div><div class="stat-sub">May 2026</div></div>
+        <div class="stat-card"><div class="stat-label">Action items</div><div class="stat-val" id="statActions">0</div><div class="stat-sub">Across all meetings</div></div>
+        <div class="stat-card"><div class="stat-label">Hours saved</div><div class="stat-val" id="statHours">0h</div><div class="stat-sub">Via AI summaries</div></div>
+      </div>
+
+      <div class="section-hd">
+        <span>Recent meetings</span>
+      </div>
+
+      <div class="meetings-list" id="meetingsList">
+        <div class="loading"><div class="spinner"></div> Loading meetings...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-hd">
+      <div class="detail-title" id="detTitle">—</div>
+      <div class="detail-meta" id="detMeta">—</div>
+    </div>
+    <div class="detail-body">
+      <div>
+        <div class="det-label">AI Summary</div>
+        <div class="summary-box" id="detSummary">—</div>
+      </div>
+      <div>
+        <div class="det-label">Action Items</div>
+        <div id="detActions">—</div>
+      </div>
+      <div>
+        <div class="det-label">Transcript</div>
+        <div class="summary-box" id="detTranscript" style="max-height:120px;overflow-y:auto;font-family:var(--mono);font-size:11px;line-height:1.6">—</div>
+      </div>
+    </div>
+    <div class="detail-footer">
+      <button class="foot-btn"><i class="ti ti-mail" style="font-size:14px"></i> Email notes to team</button>
+      <button class="foot-btn"><i class="ti ti-download" style="font-size:14px"></i> Download transcript</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Upload a meeting</div>
+    <div class="modal-sub">Our AI will transcribe and summarize it for you.</div>
+    <input type="text" class="form-input" id="meetingTitle" placeholder="Meeting title (e.g. Q2 Planning)">
+    <div class="upload-zone" onclick="document.getElementById('audioFile').click()">
+      <i class="ti ti-cloud-upload"></i>
+      <p id="fileLabel">Click to select audio file</p>
+      <span>MP3, MP4, WAV, M4A supported</span>
+    </div>
+    <input type="file" id="audioFile" accept="audio/*,video/*" style="display:none" onchange="fileSelected(this)">
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="uploadStatus" style="font-size:12px;color:var(--text2);margin-top:8px;font-family:var(--mono);min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-upload" id="uploadBtn" onclick="uploadMeeting()" disabled>Process with AI</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://kfesivpdeqwtqgaxvchi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZXNpdnBkZXF3dHFnYXh2Y2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MTg1NzcsImV4cCI6MjA5NDk5NDU3N30.CWfpRi4kfDthjm8rq9aGoPRCspNnW2aWCCquKgqIfw8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let meetings = [];
+let selectedFile = null;
+
+// ─── AUTH ───
+function switchTab(tab) {
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+}
+
+async function doGoogleLogin() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) alert('Google login error: ' + error.message);
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  const suc = document.getElementById('loginSuccess');
+  err.style.display = 'none'; suc.style.display = 'none';
+  if (!email || !pass) { showErr(err, 'Email aur password dono bharo.'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) showErr(err, error.message);
+}
+
+async function doSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass = document.getElementById('signupPass').value;
+  const btn = document.getElementById('signupBtn');
+  const err = document.getElementById('signupError');
+  const suc = document.getElementById('signupSuccess');
+  err.style.display = 'none'; suc.style.display = 'none';
+  if (!name || !email || !pass) { showErr(err, 'Sab fields bharo.'); return; }
+  if (pass.length < 8) { showErr(err, 'Password kam se kam 8 characters ka hona chahiye.'); return; }
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+  btn.disabled = false; btn.textContent = 'Create free account';
+  if (error) showErr(err, error.message);
+  else { suc.textContent = 'Account ban gaya! Apna email check karo confirmation ke liye.'; suc.style.display = 'block'; }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  showAuth();
+}
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+// ─── SESSION ───
+sb.auth.onAuthStateChange((event, session) => {
+  if (session?.user) { currentUser = session.user; showDashboard(); }
+  else { currentUser = null; showAuth(); }
+});
+
+function showAuth() {
+  document.getElementById('authPage').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userEmail').textContent = currentUser.email;
+  document.getElementById('userAvatar').textContent = name[0].toUpperCase();
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  loadMeetings();
+}
+
+// ─── MEETINGS ───
+async function loadMeetings() {
+  // Try to load from Supabase; gracefully handle if table doesn't exist yet
+  try {
+    const { data, error } = await sb.from('meetings').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    meetings = data || [];
+  } catch(e) {
+    meetings = [];
+  }
+  renderMeetings();
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = meetings.length;
+  const now = new Date();
+  const thisMonth = meetings.filter(m => {
+    const d = new Date(m.created_at);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  document.getElementById('statMonth').textContent = thisMonth.length;
+  let totalActions = 0;
+  meetings.forEach(m => { try { totalActions += JSON.parse(m.action_items || '[]').length; } catch(e){} });
+  document.getElementById('statActions').textContent = totalActions;
+  document.getElementById('statHours').textContent = (meetings.length * 0.6).toFixed(0) + 'h';
+}
+
+function renderMeetings() {
+  const list = document.getElementById('meetingsList');
+  if (meetings.length === 0) {
+    list.innerHTML = `<div class="empty-state"><i class="ti ti-microphone-off"></i><p>Abhi koi meeting nahi hai</p><span>Upar "New meeting" button click karo apni pehli meeting upload karne ke liye</span></div>`;
+    return;
+  }
+  list.innerHTML = meetings.map((m, i) => `
+    <div class="meeting-row" onclick="selectMeeting(${i})">
+      <div class="meeting-icon"><i class="ti ti-microphone"></i></div>
+      <div class="meeting-body">
+        <div class="meeting-title">${m.title || 'Untitled Meeting'}</div>
+        <div class="meeting-meta">
+          <span><i class="ti ti-calendar" style="font-size:11px"></i> ${new Date(m.created_at).toLocaleDateString('en-IN')}</span>
+        </div>
+        <div class="meeting-tags"><span class="mtag">AI Summary</span><span class="mtag">Transcribed</span></div>
+      </div>
+      <span class="pill pill-done">Done</span>
+    </div>
+  `).join('');
+}
+
+function selectMeeting(i) {
+  document.querySelectorAll('.meeting-row').forEach((r, j) => r.classList.toggle('sel', i === j));
+  const m = meetings[i];
+  const panel = document.getElementById('detailPanel');
+  panel.style.display = 'flex';
+  document.getElementById('detTitle').textContent = m.title || 'Untitled';
+  document.getElementById('detMeta').textContent = new Date(m.created_at).toLocaleString('en-IN');
+  document.getElementById('detSummary').textContent = m.summary || 'Summary not available.';
+  document.getElementById('detTranscript').textContent = m.transcript || 'Transcript not available.';
+  let actions = [];
+  try { actions = JSON.parse(m.action_items || '[]'); } catch(e) {}
+  document.getElementById('detActions').innerHTML = actions.length
+    ? actions.map(a => `<div class="action-item"><div class="adot"></div><div><div class="action-text">${a}</div></div></div>`).join('')
+    : '<div style="font-size:12px;color:var(--text2)">No action items found.</div>';
+}
+
+// ─── UPLOAD + AI ───
+function openModal() {
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.getElementById('meetingTitle').value = '';
+  document.getElementById('fileLabel').textContent = 'Click to select audio file';
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('progressBar').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+  selectedFile = null;
+}
+
+function fileSelected(input) {
+  if (input.files[0]) {
+    selectedFile = input.files[0];
+    document.getElementById('fileLabel').textContent = selectedFile.name;
+    document.getElementById('uploadBtn').disabled = false;
+  }
+}
+
+function setStatus(msg) { document.getElementById('uploadStatus').textContent = msg; }
+function setProgress(pct) {
+  document.getElementById('progressBar').style.display = 'block';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+async function uploadMeeting() {
+  const title = document.getElementById('meetingTitle').value.trim() || 'Untitled Meeting';
+  if (!selectedFile) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true; btn.textContent = 'Processing...';
+  setStatus('Uploading audio file...');
+  setProgress(15);
+
+  try {
+    // 1. Upload to Supabase Storage
+    const fileName = `${currentUser.id}/${Date.now()}_${selectedFile.name}`;
+    const { data: storageData, error: storageErr } = await sb.storage.from('meetings').upload(fileName, selectedFile);
+    if (storageErr) throw new Error('Storage error: ' + storageErr.message);
+    setProgress(40); setStatus('Audio uploaded! Transcribing with AI...');
+
+    // 2. Get public URL
+    const { data: urlData } = sb.storage.from('meetings').getPublicUrl(fileName);
+    const audioUrl = urlData.publicUrl;
+
+    // 3. Call OpenAI Whisper for transcription
+    setProgress(55); setStatus('Transcribing audio...');
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('model', 'whisper-1');
+    // NOTE: Replace with your OpenAI API key
+    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer YOUR_OPENAI_API_KEY' },
+      body: formData
+    });
+    let transcript = '[Transcription requires OpenAI API key]';
+    if (whisperRes.ok) {
+      const whisperData = await whisperRes.json();
+      transcript = whisperData.text || transcript;
+    }
+    setProgress(75); setStatus('Generating AI summary...');
+
+    // 4. Generate summary with Claude API
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Meeting transcript: "${transcript.substring(0, 3000)}"
+          
+Please provide:
+1. A concise 3-4 sentence summary
+2. Key action items as a JSON array of strings
+
+Respond in this exact JSON format:
+{"summary": "...", "action_items": ["item1", "item2"]}`
+        }]
+      })
+    });
+
+    let summary = 'AI summary not available. Please add OpenAI API key.';
+    let actionItems = [];
+    if (claudeRes.ok) {
+      const claudeData = await claudeRes.json();
+      const text = claudeData.content?.[0]?.text || '';
+      try {
+        const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+        summary = parsed.summary || summary;
+        actionItems = parsed.action_items || [];
+      } catch(e) { summary = text; }
+    }
+
+    setProgress(90); setStatus('Saving to database...');
+
+    // 5. Save to Supabase
+    const { error: dbErr } = await sb.from('meetings').insert({
+      user_id: currentUser.id,
+      title,
+      audio_url: audioUrl,
+      transcript,
+      summary,
+      action_items: JSON.stringify(actionItems)
+    });
+    if (dbErr) throw new Error('Database error: ' + dbErr.message);
+
+    setProgress(100); setStatus('Done! Meeting processed successfully.');
+    setTimeout(() => { closeModal(); loadMeetings(); }, 1200);
+
+  } catch(err) {
+    setStatus('Error: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Process with AI';
+  }
+}
+</script>
+</body>
+</html>
